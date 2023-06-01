@@ -5,15 +5,16 @@ from scipy.io import wavfile
 
 if __name__ == '__main__':
     file_name = input("Type file name:\n")
-    sr, x = wavfile.read(file_name)
+    rate, data = wavfile.read(file_name)
+    print(f"Number of channels = {data}")
 
-    x = signal.decimate(x, 4)
-    x = x[48000 * 3:48000 * 3 + 8192]
-    x *= np.hamming(8192)
+    x = signal.decimate(data, 4)
+    # x = x[48000 * 3:48000 * 3 + 8192]
+    x *= np.hamming(x.size)
 
     x_fft = abs(np.fft.rfft(x))
     x_db = 20 * np.log10(x_fft)
-    frequency = np.fft.rfftfreq(8192, 1 / 48000)
+    frequency = np.fft.rfftfreq(x.size, 1 / 48000)
 
     plt.plot(frequency, x_db)
     plt.show()
