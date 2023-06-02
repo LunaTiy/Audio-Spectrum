@@ -1,20 +1,57 @@
-﻿import numpy as np
-from matplotlib import pyplot as plt
-from scipy import signal
-from scipy.io import wavfile
+﻿import wave
+from tkinter import Tk, filedialog
 
-if __name__ == '__main__':
-    file_name = input("Type file name:\n")
-    rate, data = wavfile.read(file_name)
-    print(f"Number of channels = {data}")
+import matplotlib.pyplot as plt
+import numpy as np
 
-    x = signal.decimate(data, 4)
-    # x = x[48000 * 3:48000 * 3 + 8192]
-    x *= np.hamming(x.size)
 
-    x_fft = abs(np.fft.rfft(x))
-    x_db = 20 * np.log10(x_fft)
-    frequency = np.fft.rfftfreq(x.size, 1 / 48000)
+def select_audio_file():
+    # Создаем экземпляр Tk
+    root = Tk()
+    # Скрываем основное окно Tkinter
+    root.withdraw()
 
-    plt.plot(frequency, x_db)
+    # Открываем диалоговое окно для выбора файла
+    file_path = filedialog.askopenfilename(filetypes=[("WAV Files", "*.wav")])
+
+    return file_path
+
+
+def plot_audio_spectrum(filename):
+    # Открываем аудиофайл
+    with wave.open(filename, 'rb') as wav_file:
+        # Получаем параметры аудиофайла
+        num_channels = wav_file.getnchannels()
+        sample_width = wav_file.getsampwidth()
+        sample_rate = wav_file.getframerate()
+        num_frames = wav_file.getnframes()
+
+        # Читаем аудиоданные
+        audio_data = wav_file.readframes(num_frames)
+
+    # Преобразуем байтовые данные в массив NumPy
+    if sample_width == 2:
+        audio_data = np.frombuffer(audio_data, dtype=np.int16)
+    elif sample_width == 4:
+        audio_data = np.frombuffer(audio_data, dtype=np.int32)
+
+    # Вычисляем время для оси x
+    duration = num_frames / sample_rate
+    time = np.linspace(0, duration, num=len(audio_data))
+
+    # Создаем график
+    plt.figure(figsize=(10, 4))
+    plt.plot(time, audio_data)
+    plt.xlabel('Time [s]')
+    plt.ylabel('Amplitude')
+    plt.title('Audio Spectrum')
+    plt.grid(True)
     plt.show()
+
+
+# Выбираем аудиофайл
+filename = select_audio_file()
+
+if filename:
+    # Показываем амплитудно-частотную характеристику выбранного аудиофайла
+    plot_audio_spectrum(filename)
